@@ -23,38 +23,75 @@ const db = knex({
 });
 
 const initDB = async () => {
-  await db.schema.createTableIfNotExists('products', (table) => {
-    table.increments('id').primary();
-    table.string('name').notNullable();
-    table.decimal('price', 10, 2).notNullable();
-    table.integer('stock').notNullable();
-    table.timestamp('created_at').defaultTo(db.fn.now());
-  });
+  // Create users table if it doesn't exist
+  const hasUsersTable = await db.schema.hasTable('users');
+  if (!hasUsersTable) {
+    await db.schema.createTable('users', (table) => {
+      table.increments('id').primary();
+      table.string('username').notNullable().unique();
+      table.string('password').notNullable();
+      table.boolean('is_admin').defaultTo(false);
+      table.timestamp('created_at').defaultTo(db.fn.now());
+    });
+  }
 
-  await db.schema.createTableIfNotExists('sales', (table) => {
-    table.increments('id').primary();
-    table.decimal('total', 10, 2).notNullable();
-    table.timestamp('created_at').defaultTo(db.fn.now());
-  });
+  // Create products table if it doesn't exist
+  const hasProductsTable = await db.schema.hasTable('products');
+  if (!hasProductsTable) {
+    await db.schema.createTable('products', (table) => {
+      table.increments('id').primary();
+      table.string('name').notNullable();
+      table.decimal('price', 10, 2).notNullable();
+      table.integer('stock').notNullable();
+      table.integer('last_modified_by').references('id').inTable('users');
+      table.timestamp('created_at').defaultTo(db.fn.now());
+      table.timestamp('updated_at').defaultTo(db.fn.now());
+    });
+  }
 
-  await db.schema.createTableIfNotExists('sale_items', (table) => {
-    table.increments('id').primary();
-    table.integer('sale_id').references('id').inTable('sales');
-    table.integer('product_id').references('id').inTable('products');
-    table.integer('quantity').notNullable();
-    table.decimal('price', 10, 2).notNullable();
-  });
+  // Create sales table if it doesn't exist
+  const hasSalesTable = await db.schema.hasTable('sales');
+  if (!hasSalesTable) {
+    await db.schema.createTable('sales', (table) => {
+      table.increments('id').primary();
+      table.decimal('total', 10, 2).notNullable();
+      table.timestamp('created_at').defaultTo(db.fn.now());
+    });
+  }
+
+  // Create sale_items table if it doesn't exist
+  const hasSaleItemsTable = await db.schema.hasTable('sale_items');
+  if (!hasSaleItemsTable) {
+    await db.schema.createTable('sale_items', (table) => {
+      table.increments('id').primary();
+      table.integer('sale_id').references('id').inTable('sales');
+      table.integer('product_id').references('id').inTable('products');
+      table.integer('quantity').notNullable();
+      table.decimal('price', 10, 2).notNullable();
+    });
+  }
 
   // Seed initial data if products table is empty
   const productCount = await db('products').count('id as count').first();
   if (productCount && productCount.count === 0) {
-    await db('products').insert([
-      { name: 'Coffee', price: 3.50, stock: 100 },
-      { name: 'Tea', price: 2.50, stock: 100 },
-      { name: 'Sandwich', price: 6.99, stock: 50 },
-      { name: 'Cake', price: 4.99, stock: 30 },
-      { name: 'Cookie', price: 1.99, stock: 200 }
-    ]);
+    // Create default admin user if it doesn't exist
+    const adminExists = await db('users').where({ username: 'admin' }).first();
+    if (!adminExists) {
+      const [adminUser] = await db('users').insert({
+        username: 'admin',
+        password: 'admin@123', // We'll update this with proper hashing
+        is_admin: true
+      }).returning('id');
+
+      // Insert products with the admin user as last_modified_by
+      await db('products').insert([
+        { name: 'Coffee', price: 3.50, stock: 100, last_modified_by: adminUser.id },
+        { name: 'Tea', price: 2.50, stock: 100, last_modified_by: adminUser.id },
+        { name: 'Sandwich', price: 6.99, stock: 50, last_modified_by: adminUser.id },
+        { name: 'Cake', price: 4.99, stock: 30, last_modified_by: adminUser.id },
+        { name: 'Cookie', price: 1.99, stock: 200, last_modified_by: adminUser.id }
+      ]);
+    }
   }
 };
 

@@ -9,19 +9,19 @@ dotenv.config();
 const app = express();
 
 const corsOptions = {
-  origin: "*", // Allow only requests from this origin
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE", // Allowed HTTP methods
-  credentials: true, // Enable cookies or authorization headers
+  origin: "http://localhost:5173", // Allow requests from Vite dev server
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
 };
 
-
-
 // Middleware
-app.use(cors(corsOptions)); // Enable CORS
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-
+// Routes
+app.use('/api', routes);
 
 const startServer = async () => {
   try {
@@ -34,16 +34,14 @@ const startServer = async () => {
 
     // Initialize database
     await initDB();
+    console.log('Database initialized successfully');
 
-    // Use routes
-    app.use('/api', routes);
-
-    const PORT = process.env.PORT || 3001;
+    const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
-      console.log(`Server running on port http://localhost:${PORT}`);
+      console.log(`Server is running on port ${PORT}`);
     });
   } catch (error) {
-    console.error('Error starting server:', error);
+    console.error('Server startup error:', error);
     process.exit(1);
   }
 };

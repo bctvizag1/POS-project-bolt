@@ -4,6 +4,7 @@ export interface Product {
   price: number;
   stock: number;
   created_at: string;
+  qty: number;
 }
 
 export interface Sale {

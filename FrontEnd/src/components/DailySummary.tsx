@@ -1,12 +1,16 @@
-import React from 'react';
 import { DollarSign, ShoppingBag } from 'lucide-react';
 
 interface DailySummaryProps {
-  totalSales: number;
-  totalTransactions: number;
+  summary?: {
+    totalSales: number;
+    totalTransactions: number;
+  };
 }
 
-export default function DailySummary({ totalSales, totalTransactions }: DailySummaryProps) {
+export default function DailySummary({ summary }: DailySummaryProps) {
+  const totalSales = summary?.totalSales ?? 0;
+  const totalTransactions = summary?.totalTransactions ?? 0;
+
   return (
     <div className="grid grid-cols-2 gap-4">
       <div className="bg-white rounded-lg shadow-md p-6">

@@ -1,86 +1,126 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import axios from 'axios';
+import { X } from 'lucide-react';
 import { Product } from '../types';
+import { isAdmin } from '../lib/authService';
+import toast from 'react-hot-toast';
 
 interface EditProductProps {
   product: Product;
-  isOpen: boolean;
   onClose: () => void;
-  onUpdate: (id: number, updates: { price?: number; stock?: number }) => void;
+  onProductUpdated: () => void;
 }
 
-export const EditProduct: React.FC<EditProductProps> = ({ product, isOpen, onClose, onUpdate }) => {
-  const [formData, setFormData] = useState({
-    price: product.price.toString(),
-    stock: product.stock.toString(),
-  });
+export const EditProduct: React.FC<EditProductProps> = ({
+  product,
+  onClose,
+  onProductUpdated,
+}) => {
+  const [price, setPrice] = useState(product.price.toString());
+  const [stock, setStock] = useState(product.stock.toString());
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const updates: { price?: number; stock?: number } = {};
-    
-    if (formData.price !== product.price.toString()) {
-      updates.price = Number(formData.price);
-    }
-    if (formData.stock !== product.stock.toString()) {
-      updates.stock = Number(formData.stock);
+
+    if (!isAdmin()) {
+      toast.error('Admin access required');
+      return;
     }
 
-    if (Object.keys(updates).length > 0) {
-      onUpdate(product.id, updates);
+    if (isSubmitting) return;
+
+    try {
+      setIsSubmitting(true);
+      await axios.put(`/api/products/${product.id}`, {
+        price: parseFloat(price),
+        stock: parseInt(stock, 10),
+      });
+
+      toast.success('Product updated successfully');
+      onProductUpdated();
+      onClose();
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status === 403) {
+        toast.error('Admin access required');
+      } else {
+        console.error('Failed to update product:', err);
+        toast.error('Failed to update product');
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-    onClose();
   };
 
-  if (!isOpen) return null;
+  if (!isAdmin()) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="bg-yellow-100 p-6 rounded-lg shadow-lg w-96">
-        <h2 className="text-xl font-bold mb-4">Edit Product: {product.name}</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label htmlFor="price" className="block text-lg font-medium text-gray-700">
-              Price
-            </label>
-            <input
-              type="number"
-              id="price"
-              value={formData.price}
-              onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-              className="mt-1 block w-full p-2 rounded-md border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              min="0"
-              step="0.01"
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <label htmlFor="stock" className="block text-lg font-medium text-gray-700">
-              Stock
-            </label>
-            <input
-              type="number"
-              id="stock"
-              value={formData.stock}
-              onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-              className="mt-1 block w-full p-2 rounded-md border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              min="0"
-              required
-            />
-          </div>
-          <div className="flex justify-end space-x-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Update Product
-            </button>
+    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg max-w-md w-full">
+        <div className="flex justify-between items-center p-4 border-b">
+          <h2 className="text-lg font-medium">Edit Product: {product.name}</h2>
+          <button 
+            type="button"
+            onClick={onClose} 
+            className="text-gray-400 hover:text-gray-500"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-4">
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="price" className="block text-sm font-medium text-gray-700">
+                Price
+              </label>
+              <input
+                type="number"
+                id="price"
+                step="0.01"
+                min="0"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="stock" className="block text-sm font-medium text-gray-700">
+                Stock
+              </label>
+              <input
+                type="number"
+                id="stock"
+                min="0"
+                value={stock}
+                onChange={(e) => setStock(e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                required
+              />
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className={`px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md ${
+                  isSubmitting 
+                    ? 'opacity-50 cursor-not-allowed' 
+                    : 'hover:bg-indigo-700'
+                }`}
+              >
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
           </div>
         </form>
       </div>

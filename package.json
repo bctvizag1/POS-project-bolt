@@ -1,0 +1,16 @@
+{
+  "name": "pos-project-bolt",
+  "version": "1.0.0",
+  "description": "POS System Project",
+  "main": "server.ts",
+  "scripts": {
+    "start": "node server.ts",
+    "frontend": "cd FrontEnd && npm run dev",
+    "backend": "cd Backend && npm run dev",
+    "dev": "concurrently \"npm run frontend\" \"npm run backend\"",
+    "install-all": "npm install && cd Frontend && npm install && cd ../Backend && npm install"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

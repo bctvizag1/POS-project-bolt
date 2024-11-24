@@ -20,6 +20,7 @@ export  const AddProduct: React.FC<AddProductProps> = ({ isOpen, onClose, onAdd 
       name: formData.name,
       price: Number(formData.price),
       stock: Number(formData.stock),
+      qty: Number(formData.stock)
     });
     setFormData({ name: '', price: '', stock: '' });
     onClose();
