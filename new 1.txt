@@ -1,0 +1,98 @@
+
+CREATE TABLE [dbo].[products](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[name] [nvarchar](255) NOT NULL,
+	[price] [decimal](10, 2) NOT NULL,
+	[stock] [int] NOT NULL,
+	[last_modified_by] [int] NULL,
+	[created_at] [datetime2](7) NULL,
+	[updated_at] [datetime2](7) NULL,
+	[qty] [int] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+
+CREATE TABLE [dbo].[sale_items](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[sale_id] [int] NULL,
+	[product_id] [int] NULL,
+	[quantity] [int] NOT NULL,
+	[price] [decimal](10, 2) NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+
+create trigger on sale_items to update stock column in  products table  when row insert, delete and update 
+
+
+====================================================================================================================================
+
+
+
+Here's an example of a trigger that updates the stock column in the products table when a row is inserted, deleted, or updated in the sale_items table.
+
+
+CREATE TRIGGER trg_UpdateStock
+ON sale_items
+AFTER INSERT, DELETE, UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Update stock when inserting new sale items
+    UPDATE p
+    SET p.stock = p.stock - i.quantity
+    FROM products p
+    INNER JOIN inserted i ON p.id = i.product_id;
+
+    -- Update stock when deleting sale items
+    UPDATE p
+    SET p.stock = p.stock + d.quantity
+    FROM products p
+    INNER JOIN deleted d ON p.id = d.product_id;
+
+    -- Update stock when updating sale items
+    UPDATE p
+    SET p.stock = p.stock - i.quantity + d.quantity
+    FROM products p
+    INNER JOIN inserted i ON p.id = i.product_id
+    INNER JOIN deleted d ON p.id = d.product_id;
+END
+GO
+However, the above trigger will not work correctly when both insert and delete operations occur in the same transaction, because the inserted and deleted tables will contain rows from both operations.
+
+A better approach would be to use a single update statement that takes into account both the inserted and deleted rows.
+
+
+CREATE TRIGGER trg_UpdateStock
+ON sale_items
+AFTER INSERT, DELETE, UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE p
+    SET p.stock = p.stock - COALESCE(i.quantity, 0) + COALESCE(d.quantity, 0)
+    FROM products p
+    LEFT JOIN (
+        SELECT product_id, SUM(quantity) AS quantity
+        FROM inserted
+        GROUP BY product_id
+    ) i ON p.id = i.product_id
+    LEFT JOIN (
+        SELECT product_id, SUM(quantity) AS quantity
+        FROM deleted
+        GROUP BY product_id
+    ) d ON p.id = d.product_id
+    WHERE p.id IN (SELECT product_id FROM inserted UNION SELECT product_id FROM deleted);
+END
+GO
+This trigger will correctly update the stock column in the products table when rows are inserted, deleted, or updated in the sale_items table.

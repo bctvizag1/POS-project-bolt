@@ -2,8 +2,6 @@ const {db} = require('../db');
 
 const addSale = async (req, res) => {
   const { total, items } = req.body;
-  // console.log(req.body);
-  
 
   if (!items || !items.length || total <= 0) {
     return res.status(400).json({ error: 'Invalid sale data' });
@@ -17,7 +15,7 @@ const addSale = async (req, res) => {
       // Validate all items before processing
       for (const item of items) {
         const product = await trx('products')
-          .where('id', item.productId)
+          .where('id', item.product_id)
           .where('stock', '>=', item.quantity)
           .first();
 
@@ -34,7 +32,7 @@ const addSale = async (req, res) => {
        for (const item of items) {
          await trx('sale_items').insert({
            sale_id: saleId[0].id, // Use the retrieved saleId
-          product_id: item.productId,
+          product_id: item.product_id,
           quantity: item.quantity,
           price: item.price
         });

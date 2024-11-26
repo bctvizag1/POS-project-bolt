@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { format } from 'date-fns';
+import { format} from 'date-fns-tz';
+import { parseISO } from 'date-fns';
 import { Receipt, ChevronDown, ChevronUp, Printer } from 'lucide-react';
 import { Sale } from '../types';
 import { ReceiptPrinter } from '../lib/printer';
@@ -67,7 +68,7 @@ export default function TransactionList({ transactions }: TransactionListProps) 
                 Transaction #{sale.id}
               </p>
               <p className="text-sm text-gray-500">
-                {format(new Date(sale.created_at), 'MMM d, yyyy h:mm a')}
+              {format(parseISO(sale.created_at), 'MMM d, yyyy h:mm a', { timeZone: 'Asia/Kolkata' })}
               </p>
             </div>
             <div className="flex items-center space-x-4">
