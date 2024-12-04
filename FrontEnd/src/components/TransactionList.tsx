@@ -72,7 +72,7 @@ export default function TransactionList({ transactions }: TransactionListProps) 
               </p>
             </div>
             <div className="flex items-center space-x-4">
-              <p className="font-semibold">${sale.total.toFixed(2)}</p>
+              <p className="font-semibold">Rs. {sale.total.toFixed(2)}</p>
               <button
                 onClick={(e) => handleReprint(sale, e)}
                 disabled={isPrinting === sale.id}
@@ -105,9 +105,9 @@ export default function TransactionList({ transactions }: TransactionListProps) 
                     <tr key={item.id} className="text-sm">
                       <td className="py-1">{item.product_name}</td>
                       <td className="text-right">{item.quantity}</td>
-                      <td className="text-right">${item.price.toFixed(2)}</td>
+                      <td className="text-right">{item.price.toFixed(2)}</td>
                       <td className="text-right">
-                        ${(item.quantity * item.price).toFixed(2)}
+                        Rs.{(item.quantity * item.price).toFixed(2)}
                       </td>
                     </tr>
                   ))}

@@ -1,4 +1,4 @@
-import { DollarSign, ShoppingBag } from 'lucide-react';
+import { IndianRupee, ShoppingBag } from 'lucide-react';
 
 interface DailySummaryProps {
   summary?: {
@@ -16,11 +16,11 @@ export default function DailySummary({ summary }: DailySummaryProps) {
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex items-center space-x-3">
           <div className="p-2 bg-blue-100 rounded-full">
-            <DollarSign className="text-blue-600" size={24} />
+            <IndianRupee className="text-blue-600" size={24} />
           </div>
           <div>
             <p className="text-sm text-gray-500">Daily Sales</p>
-            <p className="text-xl font-semibold">${totalSales.toFixed(2)}</p>
+            <p className="text-xl font-semibold">Rs. {totalSales.toFixed(2)}</p>
           </div>
         </div>
       </div>

@@ -8,9 +8,17 @@ interface ProductListProps {
   products: Product[];
   onAddToCart: (product: Product) => void;
   isAdmin: boolean;
+  onCheckout: () => void;
+  onPrint?: () => void;
 }
 
-const ProductList: React.FC<ProductListProps> = ({ products, onAddToCart, isAdmin }) => {
+const ProductList: React.FC<ProductListProps> = ({ 
+  products, 
+  onAddToCart, 
+  isAdmin,
+  onCheckout,
+  onPrint
+}) => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -29,6 +37,10 @@ const ProductList: React.FC<ProductListProps> = ({ products, onAddToCart, isAdmi
         onChange={setSearchQuery}
         onClear={() => setSearchQuery('')}
         placeholder="Search products..."
+        products={products}
+        onAddToCart={onAddToCart}
+        onCheckout={onCheckout}
+        onPrint={onPrint}
       />
       
       <div className="bg-white shadow-sm rounded-lg">
@@ -52,7 +64,7 @@ const ProductList: React.FC<ProductListProps> = ({ products, onAddToCart, isAdmi
                 </div>
                 <p className="mt-1 text-gray-500">Stock: {product.stock}</p>
                 <p className="mt-1 text-xl font-semibold text-gray-900">
-                  ${product.price.toFixed(2)}
+                  Rs. {product.price.toFixed(2)}
                 </p>
               </div>
               <button
